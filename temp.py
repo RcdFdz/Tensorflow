@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
+from scipy import stats
 
 def human():
   iq = np.random.normal(100,15)
@@ -14,37 +14,29 @@ def descendent(parent1, parent2):
 human_evolution = [descendent(human(),human())]
 time = [0]
 conjunto_puntos = []
-x = 0
 
-for t in xrange(1,100):
+for t in xrange(1,1000):
   human_evolution.append(descendent(human_evolution[-1],human()))
   time.append(t)
   conjunto_puntos.append([time[-1], human_evolution[-1]])
 
+x = [v[0] for v in conjunto_puntos]
+y = [v[1] for v in conjunto_puntos]
 
-x_data = [v[0] for v in conjunto_puntos]
-y_data = [v[1] for v in conjunto_puntos]
+x = np.array(x)
+y = np.array(y)
 
-W = tf.Variable(tf.random_uniform([1], 0, 100))
-b = tf.Variable(tf.zeros([1]))
-y = W * x_data + b
+res = stats.theilslopes(y, x, 0.999)
+lsq_res = stats.linregress(x, y)
 
-loss = tf.reduce_mean(tf.square(y - y_data))
+print res
+print lsq_res
 
-optimizer = tf.train.GradientDescentOptimizer(0.5)
-train = optimizer.minimize(loss)
-
-init = tf.initialize_all_variables()
-
-sess = tf.Session()
-sess.run(init)
-
-for step in range(100):
-  sess.run(train)
-
-plt.plot(time,human_evolution, 'ro')
-plt.plot(x_data, sess.run(W)*x_data+sess.run(b))
-plt.xlabel('t')
-plt.ylabel('iq')
-plt.legend()
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(x, y, 'b.')
+ax.plot(x, res[1] + res[0] * x, 'r-')
+ax.plot(x, res[1] + res[2] * x, 'r--')
+ax.plot(x, res[1] + res[3] * x, 'r--')
+ax.plot(x, lsq_res[1] + lsq_res[0] * x, 'g-')
 plt.show()
